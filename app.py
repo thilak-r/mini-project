@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask import Flask, request, render_template, jsonify
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
@@ -26,9 +26,14 @@ class GlaucomaNet(nn.Module):
 # Load the trained model
 model = GlaucomaNet()
 
+# Try to load the model weights
+try:
+    model.load_state_dict(torch.load('final_glaucoma_detection_model.pth', map_location='cpu'))
+    print("Model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
 
-model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'),weights_only=False)
-model.eval() # Set the model to evaluation mode
+model.eval()  # Set the model to evaluation mode
 
 # Define the transformation for the input image
 transform = transforms.Compose([
@@ -37,51 +42,62 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/')
 def index():
-    return render_template('index.html')  # Render the index.html file
+    return render_template('index.html')
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return "OK", 200
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    if 'image' not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid file format. Please upload PNG, JPG, JPEG, or GIF"}), 400
+
     try:
-        file = request.files['image']
-        image = Image.open(io.BytesIO(file.read()))
+        image = Image.open(io.BytesIO(file.read())).convert("RGB")
         image = transform(image)
         image = image.unsqueeze(0)  # Add batch dimension
-        
-        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-        if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
-            return jsonify({"error": "Invalid file format"})
 
-        # Save the uploaded image to the uploads folder
+        # Save the uploaded image
         if not os.path.exists('uploads'):
             os.makedirs('uploads')
         file_path = os.path.join('uploads', file.filename)
         file.save(file_path)
 
         with torch.no_grad():
-            # Get model output
             output = model(image)
-            
+
             # Apply softmax to get probabilities
             probabilities = torch.softmax(output, dim=1)
-            
+
             # Get the predicted class and its score
             _, predicted = torch.max(output, 1)
             score = probabilities[0, predicted].item()
-            
+
             # Define class names
             classes = ['glaucoma', 'normal']
             prediction = classes[predicted.item()]
-            
-            return jsonify({"prediction": prediction, "score": score})
-    
-    except Exception as e:
-        return jsonify({"error": str(e)})
 
+            return jsonify({"prediction": prediction, "score": score})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # Ensuring the app runs on the correct host and port provided by Render
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
-
-
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=True)
