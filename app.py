@@ -28,8 +28,9 @@ model = GlaucomaNet()
 
 # Try to load the model weights
 try:
-    model.load_state_dict(torch.load('final_glaucoma_detection_model.pth', map_location='cpu'))
-    print("Model loaded successfully.")
+    model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'))
+    model.eval()  # Set to evaluation mode
+
 except Exception as e:
     print(f"Error loading model: {e}")
 
