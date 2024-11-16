@@ -26,8 +26,9 @@ class GlaucomaNet(nn.Module):
 # Load the trained model
 model = GlaucomaNet()
 
-model.load_state_dict(torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu')), strict=False)
-model.eval()  # Set the model to evaluation mode
+
+model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'),weights_only=False)
+model.eval() # Set the model to evaluation mode
 
 # Define the transformation for the input image
 transform = transforms.Compose([
@@ -77,7 +78,6 @@ def predict():
     
     except Exception as e:
         return jsonify({"error": str(e)})
-
 
 
 if __name__ == '__main__':
