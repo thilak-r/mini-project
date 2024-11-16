@@ -26,7 +26,7 @@ class GlaucomaNet(nn.Module):
 # Load the trained model
 model = GlaucomaNet()
 
-model.load_state_dict(torch.load('Glaucoma_model.pth', map_location=torch.device('cpu')), strict=False)
+model.load_state_dict(torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu')), strict=False)
 model.eval()  # Set the model to evaluation mode
 
 # Define the transformation for the input image
