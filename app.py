@@ -23,19 +23,6 @@ class GlaucomaNet(nn.Module):
         x = self.dropout(x)
         return x
 
-# Load the trained model
-model = GlaucomaNet()
-
-# Try to load the model weights
-try:
-    model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'))
-    model.eval()  # Set to evaluation mode
-
-except Exception as e:
-    print(f"Error loading model: {e}")
-
-model.eval()  # Set the model to evaluation mode
-
 # Define the transformation for the input image
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -43,43 +30,42 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    return "OK", 200
+    return render_template('index.html')  # Render the index.html file
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    if not allowed_file(file.filename):
-        return jsonify({"error": "Invalid file format. Please upload PNG, JPG, JPEG, or GIF"}), 400
-
     try:
+        # Validate input file
+        if 'image' not in request.files:
+            return jsonify({"error": "No file part in the request"}), 400
+
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+            return jsonify({"error": "Invalid file format"}), 400
+
+        # Preprocess the image
         image = Image.open(io.BytesIO(file.read())).convert("RGB")
         image = transform(image)
         image = image.unsqueeze(0)  # Add batch dimension
 
-        # Save the uploaded image
+        # Save the uploaded image to the uploads folder
         if not os.path.exists('uploads'):
             os.makedirs('uploads')
         file_path = os.path.join('uploads', file.filename)
         file.save(file_path)
 
+        # Load the model lazily
+        model = GlaucomaNet()
+        model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'))
+        model.eval()
+
+        # Perform prediction
         with torch.no_grad():
             output = model(image)
 
@@ -101,4 +87,5 @@ def predict():
 
 if __name__ == '__main__':
     # Ensuring the app runs on the correct host and port provided by Render
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
