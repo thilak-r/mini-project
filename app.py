@@ -62,7 +62,7 @@ def predict():
 
         # Load the model lazily
         model = GlaucomaNet()
-        model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'))
+        model = torch.load('final_glaucoma_detection_model.pth', map_location=torch.device('cpu'),weights_only=True)
         model.eval()
 
         # Perform prediction
