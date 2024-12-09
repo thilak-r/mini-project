@@ -2,8 +2,7 @@
 # Glaucoma Detection with Deep Learning
 ***Try it out links :*** <br>
 https://glaucoma-detection-f6xy.onrender.com/ 
-<br>
-https://mini-project-production-d8d8.up.railway.app/
+
 <br><br>
 under guidance of [Dr Agughasi Victor Ikechukwu](https://github.com/Victor-Ikechukwu)
 
