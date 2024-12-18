@@ -34,7 +34,11 @@ This repository contains a PyTorch implementation of a deep learning model for d
 
 # Introduction
 
-Glaucoma is a leading cause of irreversible blindness worldwide. Detecting glaucoma early can help in timely treatment and prevent vision loss. This project leverages a deep learning approach using ResNet-18 to classify eye fundus images as either "glaucoma" or "normal".
+Glaucoma is a leading cause of irreversible blindness worldwide. Detecting glaucoma early can help in timely treatment and prevent vision loss. This project leverages a deep learning approach using ResNet-18 to classify eye fundus images as either "glaucoma" or "normal". <br>
+[updates] : <br>
+1.Added unknown class. <br>
+2. Enhanced model's accuracy.
+
 
 ## Dataset
 
@@ -54,7 +58,7 @@ Dependencies:
 - Flask
 - Pillow
 - scikit-learn
-- TQDM
+- TQDM { for progression bar }
 
 ## Model Architecture
 
@@ -85,13 +89,7 @@ The data is augmented with the following transformations:
 - Random rotation (±15 degrees)
 - Normalization with mean [0.485, 0.456, 0.406] and standard deviation [0.229, 0.224, 0.225]
 
-### Training Script
 
-To train the model, run:
-
-```bash
-python train.py
-```
 
 The training history is stored in a dictionary and the best model is saved as `best_model.pth`.
 
@@ -163,17 +161,6 @@ cd glaucoma-detection
 
 ## Usage
 
-**Train the Model:**
-
-```bash
-python train.py
-```
-
-**Evaluate the Model:**
-
-```bash
-python evaluate.py
-```
 
 **Run the Flask App:**
 
